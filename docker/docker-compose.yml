@@ -7,13 +7,30 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://user:pass@db:5432/gostockly?sslmode=disable
+      JWT_SECRET: dwnudnwidunwiudnwiudn
+    restart: always
 
   db:
     image: postgres:15
+    container_name: gostockly_db
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass
       POSTGRES_DB: gostockly
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  pgdata:

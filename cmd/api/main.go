@@ -6,16 +6,15 @@ import (
 
 	"gostockly/config"
 	"gostockly/pkg/api"
+	"gostockly/pkg/database"
 )
 
 func main() {
-	// Load configuration
 	cfg := config.LoadConfig()
+	db := database.Connect()
 
-	// Initialise router
-	router := api.NewRouter(cfg)
+	router := api.NewRouter(cfg, db)
 
-	// Start the server
-	log.Println("Starting server on port 8080...")
+	log.Println("Server starting on :8080...")
 	log.Fatal(http.ListenAndServe(":8080", router))
 }

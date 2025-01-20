@@ -13,12 +13,12 @@ type Config struct {
 func LoadConfig() *Config {
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		log.Fatal("DATABASE_URL is not set")
+		log.Fatal("DATABASE_URL not set")
 	}
 
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
-		log.Fatal("JWT_SECRET is not set")
+		log.Fatal("JWT_SECRET not set")
 	}
 
 	return &Config{
