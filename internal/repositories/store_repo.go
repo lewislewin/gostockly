@@ -19,16 +19,19 @@ func (r *StoreRepository) CreateStore(store *models.Store) error {
 	return r.db.Create(store).Error
 }
 
-// GetStoresByCompany retrieves all stores belonging to a company.
+// GetStoresByCompany retrieves all stores belonging to a specific company.
 func (r *StoreRepository) GetStoresByCompany(companyID string) ([]models.Store, error) {
 	var stores []models.Store
 	err := r.db.Where("company_id = ?", companyID).Find(&stores).Error
 	return stores, err
 }
 
-// GetStoresByID retrieves all stores belonging to a company.
-func (r *StoreRepository) GetStoreByID(storeID string) (models.Store, error) {
+// GetStoreByID retrieves a store by its ID.
+func (r *StoreRepository) GetStoreByID(storeID string) (*models.Store, error) {
 	var store models.Store
-	err := r.db.Where("store_id = ?", storeID).Find(&store).Error
-	return store, err
+	err := r.db.First(&store, "id = ?", storeID).Error
+	if err != nil {
+		return nil, err
+	}
+	return &store, nil
 }

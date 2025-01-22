@@ -5,16 +5,19 @@ import (
 	"net/http"
 	"strings"
 
+	"gostockly/internal/services"
 	"gostockly/pkg/logger"
 	"gostockly/pkg/utils"
+
+	"github.com/google/uuid"
 )
 
-type contextKey struct{}
+type contextKey string
 
-var userIDKey = contextKey{}
+const userIDKey contextKey = "user_id"
+const companyIDKey contextKey = "company_id"
 
-// AuthMiddleware validates the JWT token from the Authorization header.
-func AuthMiddleware(jwtSecret string) func(http.Handler) http.Handler {
+func AuthMiddleware(userService *services.UserService) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			log := logger.GetLogger()
@@ -26,7 +29,7 @@ func AuthMiddleware(jwtSecret string) func(http.Handler) http.Handler {
 				return
 			}
 
-			// Extract token from the Authorization header
+			// Parse the token
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || parts[0] != "Bearer" {
 				log.Error("Invalid Authorization header format")
@@ -35,26 +38,34 @@ func AuthMiddleware(jwtSecret string) func(http.Handler) http.Handler {
 			}
 			token := parts[1]
 
-			// Validate the token
-			userID, err := utils.ValidateJWT(token, jwtSecret)
+			// Validate the JWT token to extract the user ID
+			userID, err := utils.ValidateJWT(token, userService.JWTSecret)
 			if err != nil {
-				log.Error("Invalid or expired token: %s", err.Error())
+				log.Error("Invalid or expired token: %v", err)
 				utils.WriteErrorResponse(w, http.StatusUnauthorized, "Invalid or expired token")
 				return
 			}
 
-			// Log successful authentication
-			log.Info("Authenticated user ID: %s", userID)
+			// Fetch the user and associated company from the database
+			user, err := userService.UserRepo.GetUserByID(userID)
+			if err != nil {
+				log.Error("User not found: %v", userID)
+				utils.WriteErrorResponse(w, http.StatusForbidden, "User not found")
+				return
+			}
 
-			// Attach the user ID to the request context
-			ctx := context.WithValue(r.Context(), userIDKey, userID)
+			if user.CompanyID == uuid.Nil {
+				log.Error("No company associated with user ID: %v", userID)
+				utils.WriteErrorResponse(w, http.StatusForbidden, "No company associated with user")
+				return
+			}
+
+			// Set user_id and company_id in the context
+			ctx := context.WithValue(r.Context(), "user_id", userID)
+			ctx = context.WithValue(ctx, "company_id", user.CompanyID.String())
+			log.Info("Authenticated user ID: %s, Company ID: %s", userID, user.CompanyID.String())
+
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
-}
-
-// GetUserIDFromContext extracts the user ID from the request context.
-func GetUserIDFromContext(ctx context.Context) (string, bool) {
-	userID, ok := ctx.Value(userIDKey).(string)
-	return userID, ok
 }

@@ -29,3 +29,13 @@ func (r *UserRepository) GetUserByEmail(email string) (*models.User, error) {
 	}
 	return &user, err
 }
+
+// GetUserByID retrieves a user by their user_id.
+func (r *UserRepository) GetUserByID(userID string) (*models.User, error) {
+	var user models.User
+	err := r.db.First(&user, "id = ?", userID).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, errors.New("user not found")
+	}
+	return &user, err
+}

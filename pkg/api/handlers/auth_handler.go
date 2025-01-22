@@ -2,23 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
-	"gostockly/config"
-	"gostockly/internal/repositories"
 	"gostockly/internal/services"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"gorm.io/gorm"
 )
 
-func RegisterAuthRoutes(r *mux.Router, cfg *config.Config, db *gorm.DB) {
-	// Initialize the repositories and services
-	userRepo := repositories.NewUserRepository(db)
-	companyRepo := repositories.NewCompanyRepository(db)
-	userService := services.NewUserService(userRepo, companyRepo, cfg.JWTSecret)
-
-	// Register routes
+func RegisterAuthRoutes(r *mux.Router, userService *services.UserService) {
 	r.HandleFunc("/auth/register", func(w http.ResponseWriter, r *http.Request) {
 		RegisterUser(w, r, userService)
 	}).Methods("POST")
@@ -43,7 +34,6 @@ func RegisterUser(w http.ResponseWriter, r *http.Request, userService *services.
 		return
 	}
 
-	// Call the service
 	user, err := userService.RegisterUser(req.Email, req.Password, req.CompanyName, req.Subdomain)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -51,9 +41,8 @@ func RegisterUser(w http.ResponseWriter, r *http.Request, userService *services.
 		return
 	}
 
-	// Return success response
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
+	_ = json.NewEncoder(w).Encode(user)
 }
 
 type LoginUserRequest struct {
@@ -69,7 +58,6 @@ func LoginUser(w http.ResponseWriter, r *http.Request, userService *services.Use
 		return
 	}
 
-	// Call the service
 	token, err := userService.AuthenticateUser(req.Email, req.Password)
 	if err != nil {
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
@@ -77,7 +65,6 @@ func LoginUser(w http.ResponseWriter, r *http.Request, userService *services.Use
 		return
 	}
 
-	// Return success response
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"token": token})
+	_ = json.NewEncoder(w).Encode(map[string]string{"token": token})
 }
