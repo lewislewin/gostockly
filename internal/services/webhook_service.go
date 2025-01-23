@@ -50,11 +50,10 @@ func (s *WebhookService) ProcessOrderWebhook(storeID string, payload []byte) err
 	}
 
 	// Get the stock group for the source store
-	stockGroups, err := s.StockGroupStoreRepo.GetStockGroupsByStore(sourceStore.ID)
-	if err != nil || len(stockGroups) == 0 {
+	stockGroup, err := s.StockGroupStoreRepo.GetStockGroupsByStore(sourceStore.ID)
+	if err != nil {
 		return errors.New("no stock group found for this store")
 	}
-	stockGroup := stockGroups[0] // A store belongs to only one stock group
 
 	// Get all stores in the stock group
 	stores, err := s.StockGroupStoreRepo.GetStoresByStockGroup(stockGroup.ID)

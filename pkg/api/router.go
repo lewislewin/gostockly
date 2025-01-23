@@ -20,11 +20,14 @@ func NewRouter(cfg *config.Config, db *gorm.DB) *mux.Router {
 	storeRepo := repositories.NewStoreRepository(db)
 	inventoryRepo := repositories.NewInventoryRepository(db)
 	stockGroupStoreRepo := repositories.NewStockGroupStoreRepository(db)
+	stockGroupRepository := repositories.NewStockGroupRepository(db)
 
 	userService := services.NewUserService(userRepo, companyRepo, cfg.JWTSecret)
 	storeService := services.NewStoreService(storeRepo)
 	inventoryService := services.NewInventoryService(inventoryRepo, storeRepo)
 	webhookService := services.NewWebhookService(storeRepo, inventoryRepo, stockGroupStoreRepo)
+	stockGroupStoreService := services.NewStockGroupStoreService(stockGroupStoreRepo, stockGroupRepository, storeRepo)
+	stockGroupService := services.NewStockGroupService(stockGroupRepository)
 
 	r := mux.NewRouter()
 	r.Use(middleware.LoggingMiddleware)
@@ -40,6 +43,8 @@ func NewRouter(cfg *config.Config, db *gorm.DB) *mux.Router {
 	protected.Use(middleware.AuthMiddleware(userService))
 	handlers.RegisterStoreRoutes(protected, storeService)
 	handlers.RegisterInventoryRoutes(protected, inventoryService)
+	handlers.RegisterStockGroupRoutes(protected, stockGroupService)
+	handlers.RegisterStockGroupStoreRoutes(protected, stockGroupStoreService)
 	log.Info("Inventory routes registered")
 
 	log.Info("All routes registered successfully")
