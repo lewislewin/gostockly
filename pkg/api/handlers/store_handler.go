@@ -22,8 +22,7 @@ func RegisterStoreRoutes(r *mux.Router, storeService *services.StoreService) {
 func CreateStore(w http.ResponseWriter, r *http.Request, storeService *services.StoreService) {
 	var req struct {
 		ShopifyStoreStub string `json:"shopify_store_stub"`
-		APIKey           string `json:"api_key"`
-		APISecret        string `json:"api_secret"`
+		AccessToken      string `json:"access_token"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -41,7 +40,7 @@ func CreateStore(w http.ResponseWriter, r *http.Request, storeService *services.
 	}
 
 	// Call the service to create the store
-	store, err := storeService.CreateStore(companyID, req.ShopifyStoreStub, req.APIKey, req.APISecret)
+	store, err := storeService.CreateStore(companyID, req.ShopifyStoreStub, req.AccessToken)
 	if err != nil {
 		http.Error(w, "Failed to create store", http.StatusInternalServerError)
 		log.Printf("Error creating store: %v", err)

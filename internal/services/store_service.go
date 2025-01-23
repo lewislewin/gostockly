@@ -16,13 +16,12 @@ func NewStoreService(repo *repositories.StoreRepository) *StoreService {
 }
 
 // CreateStore adds a store to a company.
-func (s *StoreService) CreateStore(companyID, shopifyStoreStub, apiKey, apiSecret string) (*models.Store, error) {
+func (s *StoreService) CreateStore(companyID, shopifyStoreStub, accessToken string) (*models.Store, error) {
 	store := &models.Store{
 		ID:               uuid.New(),
 		CompanyID:        uuid.MustParse(companyID),
 		ShopifyStoreStub: shopifyStoreStub,
-		APIKey:           apiKey,
-		APISecret:        apiSecret,
+		AccessToken:      accessToken,
 	}
 
 	err := s.Repo.CreateStore(store)

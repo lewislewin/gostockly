@@ -1,7 +1,9 @@
 package repositories
 
 import (
+	"errors"
 	"gostockly/internal/models"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -34,4 +36,26 @@ func (r *StoreRepository) GetStoreByID(storeID string) (*models.Store, error) {
 		return nil, err
 	}
 	return &store, nil
+}
+
+func (r *StoreRepository) GetStoreByShopifyStub(shopifyStub string) (*models.Store, error) {
+	var store models.Store
+	err := r.db.Where("shopify_store_stub = ?", shopifyStub).First(&store).Error
+	if err == gorm.ErrRecordNotFound {
+		return nil, nil
+	}
+	return &store, err
+}
+
+// GetStoreByShopifyDomain retrieves a store by its Shopify domain.
+func (r *StoreRepository) GetStoreByShopifyDomain(domain string) (*models.Store, error) {
+	// Extract the subdomain from the Shopify domain
+	parts := strings.Split(domain, ".")
+	if len(parts) < 3 || parts[1] != "myshopify" || parts[2] != "com" {
+		return nil, errors.New("invalid Shopify domain")
+	}
+	shopifyStub := parts[0] // Subdomain is the first part of the domain
+
+	// Use the subdomain to retrieve the store
+	return r.GetStoreByShopifyStub(shopifyStub)
 }

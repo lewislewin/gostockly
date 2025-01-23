@@ -19,9 +19,9 @@ func RegisterWebhookRoutes(r *mux.Router, service *services.WebhookService) {
 }
 
 func (h *WebhookHandler) HandleOrderWebhook(w http.ResponseWriter, r *http.Request) {
-	storeID := r.Header.Get("X-Store-ID") // Assuming the store ID is passed in the headers
-	if storeID == "" {
-		http.Error(w, "Missing store ID", http.StatusBadRequest)
+	shopDomain := r.Header.Get("X-Shopify-Shop-Domain")
+	if shopDomain == "" {
+		http.Error(w, "Missing X-Shopify-Shop-Domain header", http.StatusBadRequest)
 		return
 	}
 
@@ -31,7 +31,7 @@ func (h *WebhookHandler) HandleOrderWebhook(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err = h.WebhookService.ProcessOrderWebhook(storeID, payload)
+	err = h.WebhookService.ProcessOrderWebhook(shopDomain, payload)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -41,9 +41,9 @@ func (h *WebhookHandler) HandleOrderWebhook(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *WebhookHandler) HandleProductWebhook(w http.ResponseWriter, r *http.Request) {
-	storeID := r.Header.Get("X-Store-ID") // Assuming the store ID is passed in the headers
-	if storeID == "" {
-		http.Error(w, "Missing store ID", http.StatusBadRequest)
+	shopDomain := r.Header.Get("X-Shopify-Shop-Domain")
+	if shopDomain == "" {
+		http.Error(w, "Missing X-Shopify-Shop-Domain header", http.StatusBadRequest)
 		return
 	}
 
@@ -53,7 +53,7 @@ func (h *WebhookHandler) HandleProductWebhook(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	err = h.WebhookService.ProcessProductWebhook(storeID, payload)
+	err = h.WebhookService.ProcessProductWebhook(shopDomain, payload)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
