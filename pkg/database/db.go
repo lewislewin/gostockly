@@ -18,7 +18,7 @@ func Connect() *gorm.DB {
 	}
 
 	// Run migrations
-	err = db.AutoMigrate(&models.User{}, &models.Store{}, &models.Inventory{}, &models.StockGroup{}, &models.Company{})
+	err = db.AutoMigrate(&models.User{}, &models.Store{}, &models.Inventory{}, &models.StockGroup{}, &models.Company{}, &models.StockGroupStore{})
 	if err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}

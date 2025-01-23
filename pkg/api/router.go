@@ -13,36 +13,34 @@ import (
 )
 
 func NewRouter(cfg *config.Config, db *gorm.DB) *mux.Router {
-	// Initialize logger
 	log := logger.GetLogger()
 
-	// Create repositories
 	userRepo := repositories.NewUserRepository(db)
 	companyRepo := repositories.NewCompanyRepository(db)
 	storeRepo := repositories.NewStoreRepository(db)
+	inventoryRepo := repositories.NewInventoryRepository(db)
+	stockGroupStoreRepo := repositories.NewStockGroupStoreRepository(db)
 
-	// Create services
 	userService := services.NewUserService(userRepo, companyRepo, cfg.JWTSecret)
 	storeService := services.NewStoreService(storeRepo)
+	inventoryService := services.NewInventoryService(inventoryRepo, storeRepo)
+	webhookService := services.NewWebhookService(storeRepo, inventoryRepo, stockGroupStoreRepo)
 
-	// Create router
 	r := mux.NewRouter()
-
-	// Apply global logging middleware
 	r.Use(middleware.LoggingMiddleware)
 
-	// Log route registration
 	log.Info("Registering routes...")
-
-	// Public routes
 	handlers.RegisterAuthRoutes(r, userService)
 	log.Info("Auth routes registered")
 
-	// Protected routes
+	handlers.RegisterWebhookRoutes(r, webhookService)
+	log.Info("Webhook routes registered")
+
 	protected := r.PathPrefix("/api").Subrouter()
-	protected.Use(middleware.AuthMiddleware(userService)) // Auth middleware uses userService
+	protected.Use(middleware.AuthMiddleware(userService))
 	handlers.RegisterStoreRoutes(protected, storeService)
-	log.Info("Store routes registered")
+	handlers.RegisterInventoryRoutes(protected, inventoryService)
+	log.Info("Inventory routes registered")
 
 	log.Info("All routes registered successfully")
 	return r
