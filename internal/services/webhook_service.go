@@ -92,7 +92,7 @@ func (s *WebhookService) ProcessOrderWebhook(shopDomain string, payload []byte) 
 
 			adjustment := map[string]interface{}{
 				"inventoryItemId": inventory.InventoryItemID,
-				"locationId":      "105135735110", // Replace with actual location ID
+				"locationId":      targetStore.LocationID,
 				"adjustment":      -item.Quantity,
 			}
 
@@ -200,7 +200,7 @@ func (s *WebhookService) sendInventoryAdjustment(client *shopify.ShopifyClient, 
 	// Construct the mutation variables
 	variables := map[string]interface{}{
 		"input": map[string]interface{}{
-			"reason":               "correction",
+			"reason":               "movement_created",
 			"name":                 "available",
 			"referenceDocumentUri": "logistics://some.warehouse/take/2023-01/13",
 			"changes": []map[string]interface{}{

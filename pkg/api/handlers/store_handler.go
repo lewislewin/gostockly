@@ -23,6 +23,8 @@ func CreateStore(w http.ResponseWriter, r *http.Request, storeService *services.
 	var req struct {
 		ShopifyStoreStub string `json:"shopify_store_stub"`
 		AccessToken      string `json:"access_token"`
+		WebhookSignature string `json:"webhook_signature"`
+		LocationID       string `json:"location_id"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -40,7 +42,7 @@ func CreateStore(w http.ResponseWriter, r *http.Request, storeService *services.
 	}
 
 	// Call the service to create the store
-	store, err := storeService.CreateStore(companyID, req.ShopifyStoreStub, req.AccessToken)
+	store, err := storeService.CreateStore(companyID, req.ShopifyStoreStub, req.AccessToken, req.WebhookSignature, req.LocationID)
 	if err != nil {
 		http.Error(w, "Failed to create store", http.StatusInternalServerError)
 		log.Printf("Error creating store: %v", err)
