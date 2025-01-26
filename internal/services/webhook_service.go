@@ -9,6 +9,8 @@ import (
 	"gostockly/pkg/logger"
 	"gostockly/pkg/shopify"
 
+	"sync"
+
 	"github.com/google/uuid"
 )
 
@@ -73,36 +75,58 @@ func (s *WebhookService) ProcessOrderWebhook(shopDomain string, payload []byte) 
 	}
 	log.Info("Found %d stores in stock group %s", len(stores), stockGroup.ID)
 
+	// Create a WaitGroup to wait for all goroutines to finish
+	var wg sync.WaitGroup
+
+	// Create a channel to collect errors (optional)
+	errChan := make(chan error, len(stores))
+
 	// Iterate through stores in the stock group
 	for _, targetStore := range stores {
 		if targetStore.ID == sourceStore.ID {
 			continue
 		}
-		log.Info("Processing stock updates for target store: %s (ID: %s)", targetStore.ShopifyStoreStub, targetStore.ID)
+		wg.Add(1)
 
-		shopifyClient := shopify.NewShopifyClient(targetStore.AccessToken, targetStore.ShopifyStoreStub)
+		// Start a goroutine for each store
+		go func(targetStore models.Store) {
+			defer wg.Done()
+			log.Info("Processing stock updates for target store: %s (ID: %s)", targetStore.ShopifyStoreStub, targetStore.ID)
 
-		// Process each line item individually
-		for _, item := range order.LineItems {
-			inventory, err := s.InventoryRepo.GetInventoryBySKUAndStore(item.SKU, targetStore.ID)
-			if err != nil {
-				log.Debug("Failed to find inventory for SKU %s in store %s: %v", item.SKU, targetStore.ID, err)
-				continue
+			shopifyClient := shopify.NewShopifyClient(targetStore.AccessToken, targetStore.ShopifyStoreStub)
+
+			// Process each line item individually
+			for _, item := range order.LineItems {
+				inventory, err := s.InventoryRepo.GetInventoryBySKUAndStore(item.SKU, targetStore.ID)
+				if err != nil {
+					log.Debug("Failed to find inventory for SKU %s in store %s: %v", item.SKU, targetStore.ID, err)
+					continue
+				}
+
+				adjustment := map[string]interface{}{
+					"inventoryItemId": inventory.InventoryItemID,
+					"locationId":      targetStore.LocationID,
+					"adjustment":      -item.Quantity,
+				}
+
+				// Send the adjustment
+				log.Info("Sending inventory adjustment for SKU: %s to store: %s", item.SKU, targetStore.ShopifyStoreStub)
+				err = s.sendInventoryAdjustment(shopifyClient, adjustment)
+				if err != nil {
+					log.Error("Failed to send inventory adjustment for store %s: %v", targetStore.ShopifyStoreStub, err)
+					errChan <- err // Send error to the channel
+				}
 			}
+		}(targetStore)
+	}
 
-			adjustment := map[string]interface{}{
-				"inventoryItemId": inventory.InventoryItemID,
-				"locationId":      targetStore.LocationID,
-				"adjustment":      -item.Quantity,
-			}
+	// Wait for all goroutines to finish
+	wg.Wait()
+	close(errChan)
 
-			// Send the adjustment
-			log.Info("Sending inventory adjustment for SKU: %s to store: %s", item.SKU, targetStore.ShopifyStoreStub)
-			err = s.sendInventoryAdjustment(shopifyClient, adjustment)
-			if err != nil {
-				log.Error("Failed to send inventory adjustment for store %s: %v", targetStore.ShopifyStoreStub, err)
-			}
-		}
+	// Check for errors
+	for err := range errChan {
+		log.Error("Error occurred during inventory adjustment: %v", err)
 	}
 
 	log.Info("Finished processing order webhook for shop: %s", shopDomain)
