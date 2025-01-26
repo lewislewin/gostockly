@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"gostockly/internal/services"
+	"gostockly/pkg/logger"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -19,9 +20,9 @@ func NewStockGroupHandler(service *services.StockGroupService) *StockGroupHandle
 
 // CreateStockGroup handles creating a new stock group.
 func (h *StockGroupHandler) CreateStockGroup(w http.ResponseWriter, r *http.Request) {
+	log := logger.GetLogger()
 	var req struct {
-		Name      string `json:"name"`
-		CompanyID string `json:"company_id"`
+		Name string `json:"name"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -29,12 +30,14 @@ func (h *StockGroupHandler) CreateStockGroup(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if req.Name == "" || req.CompanyID == "" {
-		http.Error(w, "Name and CompanyID are required", http.StatusBadRequest)
+	companyID, ok := r.Context().Value("company_id").(string)
+	if !ok || companyID == "" {
+		http.Error(w, "Unauthorized: missing company_id in context", http.StatusUnauthorized)
+		log.Error("Error: missing company_id in context")
 		return
 	}
 
-	stockGroup, err := h.StockGroupService.CreateStockGroup(req.Name, req.CompanyID)
+	stockGroup, err := h.StockGroupService.CreateStockGroup(req.Name, companyID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
