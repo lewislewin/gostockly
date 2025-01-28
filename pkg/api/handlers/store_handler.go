@@ -10,6 +10,7 @@ import (
 )
 
 func RegisterStoreRoutes(r *mux.Router, storeService *services.StoreService) {
+	r.HandleFunc("/stores", HandleOptions).Methods(http.MethodOptions)
 	r.HandleFunc("/stores", func(w http.ResponseWriter, r *http.Request) {
 		CreateStore(w, r, storeService)
 	}).Methods("POST")

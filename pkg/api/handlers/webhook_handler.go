@@ -14,6 +14,7 @@ type WebhookHandler struct {
 
 func RegisterWebhookRoutes(r *mux.Router, service *services.WebhookService) {
 	handler := &WebhookHandler{WebhookService: service}
+	r.HandleFunc("/webhook/orders", HandleOptions).Methods(http.MethodOptions)
 	r.HandleFunc("/webhook/orders", handler.HandleOrderWebhook).Methods("POST")
 	r.HandleFunc("/webhook/products", handler.HandleProductWebhook).Methods("POST")
 }

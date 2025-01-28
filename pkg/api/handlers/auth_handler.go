@@ -10,10 +10,12 @@ import (
 )
 
 func RegisterAuthRoutes(r *mux.Router, userService *services.UserService) {
+	r.HandleFunc("/auth/register", HandleOptions).Methods(http.MethodOptions)
 	r.HandleFunc("/auth/register", func(w http.ResponseWriter, r *http.Request) {
 		RegisterUser(w, r, userService)
 	}).Methods("POST")
 
+	r.HandleFunc("/auth/login", HandleOptions).Methods(http.MethodOptions)
 	r.HandleFunc("/auth/login", func(w http.ResponseWriter, r *http.Request) {
 		LoginUser(w, r, userService)
 	}).Methods("POST")

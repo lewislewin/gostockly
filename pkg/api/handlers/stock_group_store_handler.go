@@ -52,5 +52,6 @@ func (h *StockGroupStoreHandler) AddStoreToStockGroup(w http.ResponseWriter, r *
 
 func RegisterStockGroupStoreRoutes(r *mux.Router, service *services.StockGroupStoreService) {
 	handler := NewStockGroupStoreHandler(service)
+	r.HandleFunc("/stockgroupstore/add", HandleOptions).Methods(http.MethodOptions)
 	r.HandleFunc("/stockgroupstore/add", handler.AddStoreToStockGroup).Methods("POST")
 }

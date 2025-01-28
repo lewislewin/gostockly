@@ -68,6 +68,8 @@ func (h *StockGroupHandler) GetStockGroupsByCompany(w http.ResponseWriter, r *ht
 // RegisterStockGroupRoutes registers stock group routes.
 func RegisterStockGroupRoutes(r *mux.Router, service *services.StockGroupService) {
 	handler := NewStockGroupHandler(service)
+	r.HandleFunc("/stockgroup", HandleOptions).Methods(http.MethodOptions)
 	r.HandleFunc("/stockgroup", handler.CreateStockGroup).Methods("POST")
+	r.HandleFunc("/stockgroup/company/{company_id}", HandleOptions).Methods(http.MethodOptions)
 	r.HandleFunc("/stockgroup/company/{company_id}", handler.GetStockGroupsByCompany).Methods("GET")
 }
