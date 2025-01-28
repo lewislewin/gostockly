@@ -31,6 +31,7 @@ func NewRouter(cfg *config.Config, db *gorm.DB) *mux.Router {
 
 	r := mux.NewRouter()
 	r.Use(middleware.LoggingMiddleware)
+	r.Use(middleware.CORSMiddleware)
 
 	log.Info("Registering routes...")
 	handlers.RegisterAuthRoutes(r, userService)
