@@ -49,7 +49,14 @@ func (h *StockGroupHandler) CreateStockGroup(w http.ResponseWriter, r *http.Requ
 
 // GetStockGroupsByCompany handles retrieving all stock groups for a company.
 func (h *StockGroupHandler) GetStockGroupsByCompany(w http.ResponseWriter, r *http.Request) {
-	companyID := mux.Vars(r)["company_id"]
+	log := logger.GetLogger()
+
+	companyID, ok := r.Context().Value("company_id").(string)
+	if !ok || companyID == "" {
+		http.Error(w, "Unauthorized: missing company_id in context", http.StatusUnauthorized)
+		log.Error("Error: missing company_id in context")
+		return
+	}
 
 	if _, err := uuid.Parse(companyID); err != nil {
 		http.Error(w, "Invalid company ID", http.StatusBadRequest)
@@ -68,8 +75,8 @@ func (h *StockGroupHandler) GetStockGroupsByCompany(w http.ResponseWriter, r *ht
 // RegisterStockGroupRoutes registers stock group routes.
 func RegisterStockGroupRoutes(r *mux.Router, service *services.StockGroupService) {
 	handler := NewStockGroupHandler(service)
-	r.HandleFunc("/stockgroup", HandleOptions).Methods(http.MethodOptions)
-	r.HandleFunc("/stockgroup", handler.CreateStockGroup).Methods("POST")
-	r.HandleFunc("/stockgroup/company/{company_id}", HandleOptions).Methods(http.MethodOptions)
-	r.HandleFunc("/stockgroup/company/{company_id}", handler.GetStockGroupsByCompany).Methods("GET")
+	r.HandleFunc("/stockgroups", HandleOptions).Methods(http.MethodOptions)
+	r.HandleFunc("/stockgroups", handler.CreateStockGroup).Methods("POST")
+	r.HandleFunc("/stockgroups", HandleOptions).Methods(http.MethodOptions)
+	r.HandleFunc("/stockgroups", handler.GetStockGroupsByCompany).Methods("GET")
 }
