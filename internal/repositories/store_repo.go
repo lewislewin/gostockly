@@ -59,3 +59,11 @@ func (r *StoreRepository) GetStoreByShopifyDomain(domain string) (*models.Store,
 	// Use the subdomain to retrieve the store
 	return r.GetStoreByShopifyStub(shopifyStub)
 }
+
+func (r *StoreRepository) UpdateStore(store *models.Store) error {
+	return r.db.Save(store).Error
+}
+
+func (r *StoreRepository) DeleteStore(storeID string) error {
+	return r.db.Delete(&models.Store{}, "id = ?", storeID).Error
+}
