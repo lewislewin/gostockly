@@ -6,20 +6,37 @@ import (
 	"gostockly/pkg/logger"
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
-type StockGroupHandler struct {
-	StockGroupService *services.StockGroupService
+func RegisterStockGroupRoutes(r *mux.Router, stockGroupService *services.StockGroupService) {
+	stockGroupRouter := r.PathPrefix("/stockgroups").Subrouter()
+
+	stockGroupRouter.HandleFunc("", HandleOptions).Methods(http.MethodOptions)
+	stockGroupRouter.HandleFunc("/{id}", HandleOptions).Methods(http.MethodOptions)
+
+	stockGroupRouter.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
+		CreateStockGroup(w, r, stockGroupService)
+	}).Methods(http.MethodPost)
+
+	stockGroupRouter.HandleFunc("", func(w http.ResponseWriter, r *http.Request) {
+		GetStockGroupsByCompany(w, r, stockGroupService)
+	}).Methods(http.MethodGet)
+
+	stockGroupRouter.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		GetStockGroupByID(w, r, stockGroupService)
+	}).Methods(http.MethodGet)
+
+	stockGroupRouter.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		UpdateStockGroup(w, r, stockGroupService)
+	}).Methods(http.MethodPut)
+
+	stockGroupRouter.HandleFunc("/{id}", func(w http.ResponseWriter, r *http.Request) {
+		DeleteStockGroup(w, r, stockGroupService)
+	}).Methods(http.MethodDelete)
 }
 
-func NewStockGroupHandler(service *services.StockGroupService) *StockGroupHandler {
-	return &StockGroupHandler{StockGroupService: service}
-}
-
-// CreateStockGroup handles creating a new stock group.
-func (h *StockGroupHandler) CreateStockGroup(w http.ResponseWriter, r *http.Request) {
+func CreateStockGroup(w http.ResponseWriter, r *http.Request, stockGroupService *services.StockGroupService) {
 	log := logger.GetLogger()
 	var req struct {
 		Name string `json:"name"`
@@ -37,7 +54,7 @@ func (h *StockGroupHandler) CreateStockGroup(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	stockGroup, err := h.StockGroupService.CreateStockGroup(req.Name, companyID)
+	stockGroup, err := stockGroupService.CreateStockGroup(req.Name, companyID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -47,8 +64,7 @@ func (h *StockGroupHandler) CreateStockGroup(w http.ResponseWriter, r *http.Requ
 	json.NewEncoder(w).Encode(stockGroup)
 }
 
-// GetStockGroupsByCompany handles retrieving all stock groups for a company.
-func (h *StockGroupHandler) GetStockGroupsByCompany(w http.ResponseWriter, r *http.Request) {
+func GetStockGroupsByCompany(w http.ResponseWriter, r *http.Request, stockGroupService *services.StockGroupService) {
 	log := logger.GetLogger()
 
 	companyID, ok := r.Context().Value("company_id").(string)
@@ -58,12 +74,7 @@ func (h *StockGroupHandler) GetStockGroupsByCompany(w http.ResponseWriter, r *ht
 		return
 	}
 
-	if _, err := uuid.Parse(companyID); err != nil {
-		http.Error(w, "Invalid company ID", http.StatusBadRequest)
-		return
-	}
-
-	stockGroups, err := h.StockGroupService.GetStockGroupsByCompany(companyID)
+	stockGroups, err := stockGroupService.GetStockGroupsByCompany(companyID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -72,11 +83,48 @@ func (h *StockGroupHandler) GetStockGroupsByCompany(w http.ResponseWriter, r *ht
 	json.NewEncoder(w).Encode(stockGroups)
 }
 
-// RegisterStockGroupRoutes registers stock group routes.
-func RegisterStockGroupRoutes(r *mux.Router, service *services.StockGroupService) {
-	handler := NewStockGroupHandler(service)
-	r.HandleFunc("/stockgroups", HandleOptions).Methods(http.MethodOptions)
-	r.HandleFunc("/stockgroups", handler.CreateStockGroup).Methods("POST")
-	r.HandleFunc("/stockgroups", HandleOptions).Methods(http.MethodOptions)
-	r.HandleFunc("/stockgroups", handler.GetStockGroupsByCompany).Methods("GET")
+func GetStockGroupByID(w http.ResponseWriter, r *http.Request, stockGroupService *services.StockGroupService) {
+	stockGroupID := mux.Vars(r)["id"]
+
+	stockGroup, err := stockGroupService.GetStockGroupByID(stockGroupID)
+	if err != nil {
+		http.Error(w, "Stock group not found", http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(stockGroup)
+}
+
+func UpdateStockGroup(w http.ResponseWriter, r *http.Request, stockGroupService *services.StockGroupService) {
+	stockGroupID := mux.Vars(r)["id"]
+
+	var req struct {
+		Name string `json:"name"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	updatedStockGroup, err := stockGroupService.UpdateStockGroup(stockGroupID, req.Name)
+	if err != nil {
+		http.Error(w, "Failed to update stock group", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(updatedStockGroup)
+}
+
+func DeleteStockGroup(w http.ResponseWriter, r *http.Request, stockGroupService *services.StockGroupService) {
+	stockGroupID := mux.Vars(r)["id"]
+
+	if err := stockGroupService.DeleteStockGroup(stockGroupID); err != nil {
+		http.Error(w, "Failed to delete stock group", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

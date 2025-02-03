@@ -13,12 +13,9 @@ type StockGroupService struct {
 }
 
 func NewStockGroupService(stockGroupRepo *repositories.StockGroupRepository) *StockGroupService {
-	return &StockGroupService{
-		StockGroupRepo: stockGroupRepo,
-	}
+	return &StockGroupService{StockGroupRepo: stockGroupRepo}
 }
 
-// CreateStockGroup creates a new stock group for a company.
 func (s *StockGroupService) CreateStockGroup(name string, companyID string) (*models.StockGroup, error) {
 	companyUUID, err := uuid.Parse(companyID)
 	if err != nil {
@@ -39,7 +36,29 @@ func (s *StockGroupService) CreateStockGroup(name string, companyID string) (*mo
 	return stockGroup, nil
 }
 
-// GetStockGroupsByCompany retrieves all stock groups belonging to a company.
 func (s *StockGroupService) GetStockGroupsByCompany(companyID string) ([]models.StockGroup, error) {
 	return s.StockGroupRepo.GetStockGroupsByCompany(companyID)
+}
+
+func (s *StockGroupService) GetStockGroupByID(stockGroupID string) (*models.StockGroup, error) {
+	return s.StockGroupRepo.GetStockGroupByID(stockGroupID)
+}
+
+func (s *StockGroupService) UpdateStockGroup(stockGroupID, name string) (*models.StockGroup, error) {
+	stockGroup, err := s.StockGroupRepo.GetStockGroupByID(stockGroupID)
+	if err != nil {
+		return nil, err
+	}
+
+	stockGroup.Name = name
+
+	if err := s.StockGroupRepo.UpdateStockGroup(stockGroup); err != nil {
+		return nil, err
+	}
+
+	return stockGroup, nil
+}
+
+func (s *StockGroupService) DeleteStockGroup(stockGroupID string) error {
+	return s.StockGroupRepo.DeleteStockGroup(stockGroupID)
 }
