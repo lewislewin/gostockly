@@ -1,37 +1,35 @@
----
-title: "Receipt Splitter"
-date: "2025-02-04"
-description: "AI-powered receipt splitting"
-github: "https://github.com/lewislewin/receipt-splitter"
----
+# Gostockly
 
-# Receipt Splitter
+Managing inventory across multiple Shopify stores can be challenging. To address this, I developed Gostockly, which ensures real-time synchronization of stock levels across all connected stores.
 
-## What is it?
+## Key Features
 
-Splitting a bill at a restaurant or pub is a pain. **Who owes what? How do we fairly divide shared items?**  
-The **Receipt Splitter App** solves this with a **fully automated, AI-powered system**.
+- **Prevents Overselling:** By keeping inventory levels consistent, the tool helps avoid situations where products are sold beyond available stock.
+- **Automatic Updates:** The system detects and applies stock changes instantly, ensuring all stores reflect accurate inventory without manual intervention.
+- **User-Friendly Dashboard:** A centralized interface allows for easy monitoring and management of stock levels across all stores.
 
-## How It Works
+## Technical Implementation
 
-1. **Upload a Receipt** 📸 – The person who paid uploads a photo of the receipt.
-2. **AI Parses the Receipt** 🤖 – The app uses **Google OCR** to extract text from the image and then sends it to **OpenAI** to convert it into a structured JSON object, identifying items, prices, tax, and deductions.
-3. **Share the Link** 🔗 – The uploader sends a link to everyone at the table, providing access to a digital version of the receipt.
-4. **Select Your Items** 👥 – Each person selects what they ordered.
-5. **Monzo Links Generated** 💳 – Instantly generate a Monzo payment link for seamless reimbursement.
+The application is built using Go, chosen for its performance and concurrency capabilities. It leverages Shopify's API to manage inventory data. The project structure includes:
 
-## Why It's Useful
+- **cmd/**: Contains the main application entry point.
+- **config/**: Manages configuration settings.
+- **docker/**: Includes Docker-related files for containerization.
+- **internal/**: Houses internal application logic.
+- **pkg/**: Contains reusable packages.
 
-- **No more manual calculations** – AI handles all the math.  
-- **Fair & Transparent** – Everyone picks their items before paying.  
-- **Works with any receipt** – OCR ensures accuracy.  
-- **Monzo Integration** – Send payments with one tap.
+## Frontend Integration
 
-## The Tech Behind It
+To provide a seamless user experience, I developed a frontend application using SvelteKit, a modern framework for building web applications. This frontend communicates with the Go backend to display real-time inventory data and synchronization status. The repository for the frontend is available here: [lewislewin/gostockly-frontend](https://github.com/lewislewin/gostockly-frontend).
 
-- **Frontend:** Built with **SvelteKit** for a smooth user experience.
-- **Backend:** Initially written in **Django**, but Go provided better **performance and simplicity**.
-- **AI Parsing:** Utilizes **Google OCR** to extract text from receipt images, which is then processed by **OpenAI** to convert it into a structured JSON object.
-- **Payments:** Generates **Monzo.me links** dynamically.
+## Importance and Backstory
 
-*Note: The project's source code is available on GitHub: [lewislewin/receipt-splitter](https://github.com/lewislewin/receipt-splitter) and [lewislewin/receipt-splitter-backend](https://github.com/lewislewin/receipt-splitter-backend).*
+In the rapidly evolving e-commerce landscape, businesses often operate multiple online stores to reach diverse markets or manage different product lines. However, this multi-store approach introduces the challenge of maintaining consistent inventory levels across all platforms. Discrepancies can lead to overselling, stockouts, and dissatisfied customers.
+
+Recognizing this pain point, I developed Gostockly to provide a reliable solution for real-time inventory synchronization. By ensuring that all connected stores reflect accurate stock levels, businesses can prevent overselling, optimize inventory management, and enhance customer satisfaction.
+
+## Getting Started
+
+For those interested in implementing this solution or seeking further information, please reach out via email at [lewis@lewislewin.com](mailto:lewis@lewislewin.com).
+
+*Note: The project's source code is available on GitHub: [lewislewin/gostockly](https://github.com/lewislewin/gostockly) and  [lewislewin/gostockly-frontend](https://github.com/lewislewin/gostockly-frontend).*
